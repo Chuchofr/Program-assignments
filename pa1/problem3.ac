@@ -1,0 +1,14 @@
+i x
+i y
+i g
+i h
+i e
+
+x = 3
+y = 4
+
+g = (x + y) * (x + y)
+h = x * x + 2 * x * y + y * y
+e = g - h
+
+p e
