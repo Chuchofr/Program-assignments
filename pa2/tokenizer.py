@@ -62,10 +62,35 @@ class Tokenizer:
                 return Token(TokenType.EXPONENT, lexeme = f"{char}")
             
             case 'i':
-                return Token(TokenType.INTDEC, lexeme = f"{char}")
+                # consume optional whitespace after 'i'
+                while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
+                    self.cs.read()
+
+                if self.cs.eof():
+                    raise ValueError("Expected variable name after 'i'")
+
+                name = self.cs.read()
+
+                if (not name.isalpha()) or (name not in VALID_VARS):
+                    raise ValueError(f"Invalid variable character after 'i': {name}")
+
+                return Token(TokenType.INTDEC, lexeme=f"i{name}", name=name)
 
             case 'p':
-                return Token(TokenType.PRINT, lexeme = f"{char}")
+                # consume optional whitespace after 'p'
+                while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
+                    self.cs.read()
+
+                if self.cs.eof():
+                    raise ValueError("Expected variable name after 'p'")
+
+                name = self.cs.read()
+
+                if (not name.isalpha()) or (name not in VALID_VARS):
+                    raise ValueError(f"Invalid variable character after 'p': {name}")
+
+                return Token(TokenType.PRINT, lexeme=f"p{name}", name=name)
+
             
             case _:
                 pass # Move on to secondary inspection to handle digits, vars, error case
