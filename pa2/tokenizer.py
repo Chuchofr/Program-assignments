@@ -67,11 +67,11 @@ class Tokenizer:
                     self.cs.read()
 
                 if self.cs.eof() or self.cs.peek() == '':
-                    raise ValueError("Expected variable name after 'i'")
+                    raise ValueError("Expected variable name after 'i':")
 
 
-                if (not name.isalpha()) or (name not in VALID_VARS):
-                    raise ValueError(f"Invalid variable character after 'i': {self.cs.peek()!r}")
+                if (not self.cs.peek().isalpha()) or (self.cs.peek() not in VALID_VARS):
+                    raise ValueError(f"Invalid variable character: {self.cs.peek()!r}")
                 
                 name = self.cs.read()
                 return Token(TokenType.INTDEC, lexeme=f"i{name}", name=name)
@@ -88,7 +88,7 @@ class Tokenizer:
                     raise ValueError(f"Invalid variable character after 'p': {self.cs.peek()!r}")
                 
                 name = self.cs.read()
-                return Token(TokenType.PRINT, lexeme=f"p{name}", name=char)
+                return Token(TokenType.PRINT, lexeme=f"p{name}", name=name)
 
             
             case _:
@@ -120,12 +120,12 @@ class Tokenizer:
         #    digits.append(SOMETHING)
 
         if firstchar == '0' and self.cs.peek().isdigit():
-            raise ValueError("Integral literal cannot have a leading zero")
+            raise ValueError("Integer literal cannot have a leading zero")
         
         while not self.cs.eof() and self.cs.peek().isdigit():
             digits.append(self.cs.read())
-       
-       
+
+
         lexeme = ''.join(digits)
 
         return lexeme, int(lexeme)

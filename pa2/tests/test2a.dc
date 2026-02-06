@@ -1,1 +1,2 @@
-ERROR: UnboundLocalError: cannot access local variable 'name' where it is not associated with a value
+[Token type: TokenType.INTDEC; lexeme: ia; name: a]
+[Token type: TokenType.EOF; lexeme: ]

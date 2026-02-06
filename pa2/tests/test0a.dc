@@ -1,0 +1,2 @@
+[Token type: TokenType.PRINT; lexeme: pa; name: a]
+[Token type: TokenType.EOF; lexeme: ]
