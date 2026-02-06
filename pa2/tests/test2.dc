@@ -1,5 +1,1 @@
-[Token type: TokenType.INTDEC; lexeme: ia; name: i]
-[Token type: TokenType.INTDEC; lexeme: ib; name: i]
-[Token type: TokenType.PRINT; lexeme: pa; name: p]
-[Token type: TokenType.PRINT; lexeme: pb; name: p]
-[Token type: TokenType.EOF; lexeme: ]
+ERROR: UnboundLocalError: cannot access local variable 'name' where it is not associated with a value

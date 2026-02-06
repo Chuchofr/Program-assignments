@@ -1,1 +1,1 @@
-ERROR: ValueError: Invalid variable character after 'i': i
+ERROR: UnboundLocalError: cannot access local variable 'name' where it is not associated with a value

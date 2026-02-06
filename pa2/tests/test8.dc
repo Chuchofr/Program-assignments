@@ -1,1 +1,1 @@
-ERROR: ValueError: invalid literal for int() with base 10: '1+\n'
+ERROR: UnboundLocalError: cannot access local variable 'name' where it is not associated with a value
