@@ -74,7 +74,7 @@ class Tokenizer:
                 if (not name.isalpha()) or (name not in VALID_VARS):
                     raise ValueError(f"Invalid variable character after 'i': {name}")
 
-                return Token(TokenType.INTDEC, lexeme=f"i{name}", char=name)
+                return Token(TokenType.INTDEC, lexeme=f"i{name}", name=f"{char}")
 
             case 'p':
                 # consume optional whitespace after 'p'

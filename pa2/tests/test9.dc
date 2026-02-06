@@ -1,1 +1,1 @@
-ERROR: ValueError: invalid literal for int() with base 10: '1+\n'
+ERROR: TypeError: Token.__init__() got an unexpected keyword argument 'char'
