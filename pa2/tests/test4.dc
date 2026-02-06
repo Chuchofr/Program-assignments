@@ -1,1 +1,12 @@
-ERROR: TypeError: Token.__init__() got an unexpected keyword argument 'char'
+[Token type: TokenType.INTDEC; lexeme: ia; name: i]
+[Token type: TokenType.INTDEC; lexeme: ib; name: i]
+[Token type: TokenType.VARREF; lexeme: a; name: a]
+[Token type: TokenType.ASSIGN; lexeme: =]
+[Token type: TokenType.INTLIT; lexeme: 6; intval: 6]
+[Token type: TokenType.VARREF; lexeme: b; name: b]
+[Token type: TokenType.ASSIGN; lexeme: =]
+[Token type: TokenType.VARREF; lexeme: a; name: a]
+[Token type: TokenType.PLUS; lexeme: +]
+[Token type: TokenType.INTLIT; lexeme: 7; intval: 7]
+[Token type: TokenType.PRINT; lexeme: pb; name: p]
+[Token type: TokenType.EOF; lexeme: ]

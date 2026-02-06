@@ -99,9 +99,9 @@ class Tokenizer:
 
         if char.isalpha():
             if char not in VALID_VARS:
-                raise ValueError(f"Invalid variable character ater {char}: {char}")
+                raise ValueError(f"Invalid variable character ater 'i': {char}")
             else:
-                return Token(TokenType.VARREF, lexeme = f"{char}", name = char)
+                return Token(TokenType.VARREF, lexeme = f"{char}", name=char)
            
         raise ValueError(f"Unexpected character: {char!r}")
         
@@ -117,7 +117,7 @@ class Tokenizer:
         #while not self.cs.eof() and SOMETHING:
         #    digits.append(SOMETHING)
 
-        if firstchar == 0 and self.cs.peek().isdigit():
+        if firstchar == '0' and self.cs.peek().isdigit():
             raise ValueError("Integral literal cannot have a leading zero")
         
         while not self.cs.eof() and self.cs.read().isdigit():
