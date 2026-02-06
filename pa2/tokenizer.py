@@ -74,22 +74,19 @@ class Tokenizer:
                 if (not name.isalpha()) or (name not in VALID_VARS):
                     raise ValueError(f"Invalid variable character after 'i': {name}")
 
-                return Token(TokenType.INTDEC, lexeme=f"i{name}", name=name)
+                return Token(TokenType.INTDEC, lexeme=f"i{name}", name=char)
 
             case 'p':
                 # consume optional whitespace after 'p'
                 while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
                     self.cs.read()
 
-                if self.cs.eof():
-                    raise ValueError("Expected variable name after 'p'")
-
                 name = self.cs.read()
 
                 if (not name.isalpha()) or (name not in VALID_VARS):
                     raise ValueError(f"Invalid variable character after 'p': {name}")
 
-                return Token(TokenType.PRINT, lexeme=f"p{name}", name=name)
+                return Token(TokenType.PRINT, lexeme=f"p{name}", name=char)
 
             
             case _:
@@ -102,7 +99,7 @@ class Tokenizer:
 
         if char.isalpha():
             if char not in VALID_VARS:
-                raise ValueError(f"Invalid variable character: {char}")
+                raise ValueError(f"Invalid variable character ater {char}: {char}")
             else:
                 return Token(TokenType.VARREF, lexeme = f"{char}", name = char)
            
@@ -120,8 +117,8 @@ class Tokenizer:
         #while not self.cs.eof() and SOMETHING:
         #    digits.append(SOMETHING)
 
-        if firstchar == '0' and self.cs.peek().isdigit():
-            raise ValueError("Intergral literal cannot have a leading zero")
+        if firstchar == 0 and self.cs.peek().isdigit():
+            raise ValueError("Integral literal cannot have a leading zero")
         
         while not self.cs.eof() and self.cs.read().isdigit():
             digits.append(self.cs.read())
