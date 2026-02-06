@@ -66,26 +66,28 @@ class Tokenizer:
                 while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
                     self.cs.read()
 
-                if self.cs.eof():
+                if self.cs.eof() or self.cs.peek() == '':
                     raise ValueError("Expected variable name after 'i'")
 
-                name = self.cs.read()
 
                 if (not name.isalpha()) or (name not in VALID_VARS):
-                    raise ValueError(f"Invalid variable character after 'i': {name}")
-
-                return Token(TokenType.INTDEC, lexeme=f"i{name}", name=f"{char}")
+                    raise ValueError(f"Invalid variable character after 'i': {self.cs.peek()!r}")
+                
+                name = self.cs.read()
+                return Token(TokenType.INTDEC, lexeme=f"i{name}", name=name)
 
             case 'p':
                 # consume optional whitespace after 'p'
                 while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
                     self.cs.read()
 
+                if self.cs.eof() and self.cs.peek() == '':
+                    raise ValueError("Expected variable name after 'p'")
+
+                if (not self.cs.peek().isalpha()) or (self.cs.peek() not in VALID_VARS):
+                    raise ValueError(f"Invalid variable character after 'p': {self.cs.peek()!r}")
+                
                 name = self.cs.read()
-
-                if (not name.isalpha()) or (name not in VALID_VARS):
-                    raise ValueError(f"Invalid variable character after 'p': {name}")
-
                 return Token(TokenType.PRINT, lexeme=f"p{name}", name=char)
 
             
@@ -99,9 +101,9 @@ class Tokenizer:
 
         if char.isalpha():
             if char not in VALID_VARS:
-                raise ValueError(f"Invalid variable character ater 'i': {char}")
+                raise ValueError(f"Invalid variable character: {char!r}")
             else:
-                return Token(TokenType.VARREF, lexeme = f"{char}", name=char)
+                return Token(TokenType.VARREF, lexeme = f"{char}")
            
         raise ValueError(f"Unexpected character: {char!r}")
         
@@ -120,7 +122,7 @@ class Tokenizer:
         if firstchar == '0' and self.cs.peek().isdigit():
             raise ValueError("Integral literal cannot have a leading zero")
         
-        while not self.cs.eof() and self.cs.read().isdigit():
+        while not self.cs.eof() and self.cs.peek().isdigit():
             digits.append(self.cs.read())
        
        
