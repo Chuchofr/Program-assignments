@@ -91,11 +91,24 @@ def parse_expression(ts: TokenStream) -> ASTNode:
             raise ParseError("Expected operator or rparen after int literal")
 
         if tok.tokentype == TokenType.VARREF:
-            raise NotImplementedError
+            tok = ts.read()
+            if tok.lexeme is None:
+                raise ParseError("Malformed VARREF token")
+            next = ts.peek()
+            if (next.tokentype in operatortypes) or (next.tokentype == TokenType.RPAREN) or (next.tokentype == TokenType.EOF):
+                valstack.append(VarRefNode(tok.lexeme))
+                continue
+            raise ParseError("Expected operator or rparen after variable reference")
+ 
 
         if tok.tokentype == TokenType.LPAREN:
             # Push tok to operator stack and continue
-            raise NotImplementedError
+            tok = ts.read()  # consume LPAREN
+            opstack.append(tok)
+            next = ts.peek()
+            if (next.tokentype == TokenType.RPAREN) or (next.tokentype in operatortypes) or (next.tokentype == TokenType.EOF):
+                raise ParseError("Expected expression after '('")
+            continue
 
         if tok.tokentype == TokenType.RPAREN:
             ts.read()  # consume RPAREN
@@ -122,6 +135,10 @@ def parse_expression(ts: TokenStream) -> ASTNode:
                 #   reduce(opstack, valstack)
                 # else
                 #    break
+                if (top_prec > inc_prec) or (top_prec == inc_prec and leftassoc[incoming.tokentype]):
+                    reduce(opstack, valstack)
+                else:
+                    break
 
 
             opstack.append(incoming)
@@ -134,7 +151,9 @@ def parse_expression(ts: TokenStream) -> ASTNode:
         # Check to see if last element on opstack is LPAREN
         # If so, we have an issue, raise error
         # Otherwise, we can reduce
-        raise NotImplementedError
+        if opstack[-1].tokentype == TokenType.LPAREN:
+            raise ParseError("Mismatched parentheses")
+        reduce(opstack, valstack)
 
     if len(valstack) != 1:
         raise ParseError("Expression did not reduce to one AST")
@@ -154,6 +173,19 @@ def reduce(opstack: list, valstack: list) -> None:
     # Then combine them to produce a new AST node
     # Finally, push back onto valstack
 
+    if len(opstack) == 0:
+        raise ParseError("Internal error: operator stack empty")
+
+    if len(valstack) < 2:
+        raise ParseError("Not enough operands for operator")
+
+    op = opstack.pop()
+    rhs = valstack.pop()
+    lhs = valstack.pop()
+
+    valstack.append(BinOpNode(op.tokentype, lhs, rhs))
+
+
 
 def expect(ts: TokenStream, expectedtype: TokenType) -> Token:
     # Peek at next token
@@ -162,5 +194,7 @@ def expect(ts: TokenStream, expectedtype: TokenType) -> Token:
     # Return the token
     # Otherwise, raise error
     tok = ts.peek()
-    # Put stuff here
+    if tok.tokentype != expectedtype:
+        raise ParseError(f"Expected {expectedtype} but got {tok.tokentype}")
+
     return tok
