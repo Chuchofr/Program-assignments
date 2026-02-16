@@ -1,1 +1,1 @@
-Parse Error: Expected two operands for operator TokenType.VARREF (line 1)
+Parse Error: Mismatched parentheses (line 1)

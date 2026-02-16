@@ -1,1 +1,6 @@
-Parse Error: Expected two operands for operator TokenType.VARREF (line 1)
+Assign(varname='a')
+   └─ BinOp(op=TIMES)
+      ├─ IntLit(value=6)
+      └─ BinOp(op=PLUS)
+         ├─ VarRef(varname='b')
+         └─ IntLit(value=7)
