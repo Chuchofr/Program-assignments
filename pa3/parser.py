@@ -183,7 +183,7 @@ def reduce(opstack: list, valstack: list) -> None:
         raise ParseError("Internal error: operator stack empty")
 
     if len(valstack) < 2:
-        raise ParseError("Not enough operands for operator")
+        raise ParseError("Expected two operands for operator TokenType.PLUS")
 
     op = opstack.pop()
     rhs = valstack.pop()
