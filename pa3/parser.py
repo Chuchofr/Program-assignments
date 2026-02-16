@@ -16,7 +16,7 @@ def parse(ts: TokenStream) -> ASTNode:
     #print(f"parse() peeked: {t}")
 
     if t.tokentype == TokenType.PRINT:
-        ts.read()  # consume PRINT
+        ts.read()  #consume PRINT
         if t.name is None:
             raise ParseError("Malformed PRINT token")
         node = PrintNode(t.name)
@@ -24,7 +24,7 @@ def parse(ts: TokenStream) -> ASTNode:
         return node
 
     if t.tokentype == TokenType.INTDEC:
-        ts.read()  # consume INTDEC
+        ts.read()  #consume INTDEC
         if t.name is None:
             raise ParseError("Malformed INTDEC token")
         node = IntDclNode(t.name)
@@ -32,7 +32,7 @@ def parse(ts: TokenStream) -> ASTNode:
         return node
 
     if t.tokentype == TokenType.VARREF:
-        lhs = ts.read()  # consume VARREF
+        lhs = ts.read()  #consume VARREF
         expect(ts, TokenType.ASSIGN)
         rhs = parse_expression(ts)
         if lhs.lexeme is None:
@@ -49,8 +49,8 @@ def parse(ts: TokenStream) -> ASTNode:
 def parse_expression(ts: TokenStream) -> ASTNode:
     """Parse an infix arithmetic expression using shunting-yard, producing an AST."""
 
-    opstack = []   # stack of operator Tokens (and LPAREN)
-    valstack = []  # stack of ASTNodes
+    opstack = []   #stack of operator Tokens (and LPAREN)
+    valstack = []  #stack of ASTNodes
 
     precedence = {
         TokenType.EXPONENT: 3,
@@ -106,9 +106,9 @@ def parse_expression(ts: TokenStream) -> ASTNode:
             tok = ts.read()  #consume LPAREN
             opstack.append(tok)
             next = ts.peek()
-            if (next.tokentype == TokenType.RPAREN) or (next.tokentype in operatortypes) or (next.tokentype == TokenType.EOF):
-                raise ParseError("Expected expression after '('")
-            continue
+            if (next.tokentype == TokenType.LPAREN) or (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.VARREF):
+                continue
+            raise ParseError("Expected lparen, intlit or varref after lparen")
 
         if tok.tokentype == TokenType.RPAREN:
             ts.read()  #consume RPAREN
@@ -139,6 +139,12 @@ def parse_expression(ts: TokenStream) -> ASTNode:
                     reduce(opstack, valstack)
                 else:
                     break
+
+            next = ts.peek()
+            if (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.VARREF) or (next.tokentype == TokenType.LPAREN):
+                pass
+            else:
+                raise ParseError("Expected operand or lparen after operator")
 
 
             opstack.append(incoming)
@@ -197,4 +203,4 @@ def expect(ts: TokenStream, expectedtype: TokenType) -> Token:
     if tok.tokentype != expectedtype:
         raise ParseError(f"Expected {expectedtype} but found {tok.tokentype}")
 
-    return tok
+    return ts.read()
