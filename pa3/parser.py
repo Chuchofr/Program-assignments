@@ -102,8 +102,8 @@ def parse_expression(ts: TokenStream) -> ASTNode:
  
 
         if tok.tokentype == TokenType.LPAREN:
-            # Push tok to operator stack and continue
-            tok = ts.read()  # consume LPAREN
+            #Push tok to operator stack and continue
+            tok = ts.read()  #consume LPAREN
             opstack.append(tok)
             next = ts.peek()
             if (next.tokentype == TokenType.RPAREN) or (next.tokentype in operatortypes) or (next.tokentype == TokenType.EOF):
@@ -111,7 +111,7 @@ def parse_expression(ts: TokenStream) -> ASTNode:
             continue
 
         if tok.tokentype == TokenType.RPAREN:
-            ts.read()  # consume RPAREN
+            ts.read()  #consume RPAREN
             # reduce until matching LPAREN
             while True:
                 if len(opstack) == 0:
@@ -195,6 +195,6 @@ def expect(ts: TokenStream, expectedtype: TokenType) -> Token:
     # Otherwise, raise error
     tok = ts.peek()
     if tok.tokentype != expectedtype:
-        raise ParseError(f"Expected {expectedtype} but got {tok.tokentype}")
+        raise ParseError(f"Expected {expectedtype} but found {tok.tokentype}")
 
     return tok
