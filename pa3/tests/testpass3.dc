@@ -1,1 +1,2 @@
-Parse Error: Unexpected token in expression: [Token type: TokenType.ASSIGN; lexeme: =] (line 1)
+Assign(varname='a')
+   └─ VarRef(varname='b')

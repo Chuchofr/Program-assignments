@@ -1,1 +1,1 @@
-Parse Error: Unexpected token in expression: [Token type: TokenType.ASSIGN; lexeme: =] (line 1)
+Parse Error: Expected operand or lparen after operator (line 1)

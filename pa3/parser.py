@@ -108,7 +108,7 @@ def parse_expression(ts: TokenStream) -> ASTNode:
             next = ts.peek()
             if (next.tokentype == TokenType.LPAREN) or (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.VARREF):
                 continue
-            raise ParseError("Expected lparen, intlit or varref after lparen")
+            raise ParseError("Expected lparen, intlit, or varref after lparen")
 
         if tok.tokentype == TokenType.RPAREN:
             ts.read()  #consume RPAREN
