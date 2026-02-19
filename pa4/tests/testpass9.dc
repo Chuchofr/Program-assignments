@@ -1,0 +1,4 @@
+IntDcl(varname='a')
+IntDcl(varname='b')
+IntDcl(varname='c')
+IntDcl(varname='d')
