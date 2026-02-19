@@ -48,19 +48,20 @@ def stmtcodegen(statement: ASTNode) -> InstructionList:
 
     if isinstance(statement, VarRefNode):
 
-        raise NotImplementedError
+        code.append.str(statement.varname) # missing lettler l for loading the variable 
+        return code 
     
-    if isinstance(statement, PrintNode):
-
-        raise NotImplementedError
-
-    
-    if isinstance(statement, AssignNode):
+    if isinstance(statement, PrintNode): # two instructions load the variable and then print
 
         raise NotImplementedError
+
+    
+    if isinstance(statement, AssignNode): # Recursive
+
+        raise NotImplementedError
     
 
-    if isinstance(statement, BinOpNode):
+    if isinstance(statement, BinOpNode): # Recursive
 
         raise NotImplementedError
     
