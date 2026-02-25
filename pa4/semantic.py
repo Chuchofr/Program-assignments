@@ -32,7 +32,7 @@ def _semantic_check_stmt(statement: ASTNode, declared: list[str], initialized: l
         if varname not in initialized:
             raise SemanticError(f"Trying to print uninitialized variable {varname!r} at line {linenumber}")
         return 
-        # SemanticError(f"Trying to print undeclared variable {varname!r} at line {linenumber}")
+        # SemanticError(f"Trying to print undeclared variable {varname!r} at lin`e {linenumber}")
         # SemanticError(f"Trying to print uninitialized variable {varname!r} at line {linenumber}")
     
     if isinstance(statement, AssignNode):
