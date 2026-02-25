@@ -42,28 +42,47 @@ def stmtcodegen(statement: ASTNode) -> InstructionList:
 
     if isinstance(statement, IntLitNode):
 
-        code.append.str(statement.value)
+        code.append(str(statement.value))
         return code
 
 
     if isinstance(statement, VarRefNode):
 
-        code.append.str(statement.varname) # missing lettler l for loading the variable 
+        code.append(f"l{statement.varname}") # missing lettler l for loading the variable 
         return code 
     
     if isinstance(statement, PrintNode): # two instructions load the variable and then print
 
-        raise NotImplementedError
+        code.append(f"l{statement.varname}")
+        code.append("p")
+        return code
 
     
     if isinstance(statement, AssignNode): # Recursive
 
-        raise NotImplementedError
+        code.extend(stmtcodegen(statement.expr))
+        code.append(f"{statement.varname}")
+        return code
     
 
     if isinstance(statement, BinOpNode): # Recursive
 
-        raise NotImplementedError
+
+        code.extend(stmtcodegen(statement.left))
+        code.extend(stmtcodegen(statement.right))
+
+        if statement.optype == TokenType.PLUS:
+            code.append("+")
+        elif statement.optype == TokenType.MINUS:
+            code.append("-")
+        elif statement.optype == TokenType.TIMES:
+            code.append("*")
+        elif statement.optype == TokenType.DIVIDE:
+            code.append("/")
+        elif statement.optype == TokenType.EXPONENT:
+            code.append("^")
+        else:
+            raise ValueError(f"Unknown binary operator: {statement.optype}")
     
 
     # Should never get here
