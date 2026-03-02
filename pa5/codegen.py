@@ -73,9 +73,19 @@ def stmtcodegen(statement: ASTNode) -> InstructionList:
         if statement.optype == TokenType.EXPONENT:
 
             if isinstance(statement.right, TokenType.INTLIT):
-
+                exp = statement.right 
+            #Put d's and *'s here
+                if exp == 0:
+                    code.append("si")
+                    code.append("1")
+                    return code
                 
-                # Put d's and *'s here
+                #if exp > 0
+                for _ in range(exp - 1):
+                    code.append("d")
+
+                for _ in range(exp - 1):
+                    code.append("*")
 
                 return code
             else:
