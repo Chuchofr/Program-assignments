@@ -61,28 +61,38 @@ def stmtcodegen(statement: ASTNode) -> InstructionList:
     if isinstance(statement, AssignNode): # Recursive
 
         code.extend(stmtcodegen(statement.expr))
-        code.append(f"{statement.varname}")
+        code.append(f"s{statement.varname}")
         return code
     
 
     if isinstance(statement, BinOpNode): # Recursive
 
-
         code.extend(stmtcodegen(statement.left))
-        code.extend(stmtcodegen(statement.right))
+        
 
-        if statement.optype == TokenType.PLUS:
-            code.append("+")
-        elif statement.optype == TokenType.MINUS:
-            code.append("-")
-        elif statement.optype == TokenType.TIMES:
-            code.append("*")
-        elif statement.optype == TokenType.DIVIDE:
-            code.append("/")
-        elif statement.optype == TokenType.EXPONENT:
-            code.append("^")
+        if statement.optype == TokenType.EXPONENT:
+
+            if isinstance(statement.right, TokenType.INTLIT):
+
+                
+                # Put d's and *'s here
+
+                return code
+            else:
+                code.extend(stmtcodegen(statement.right))
+                code.append("^")
+                return code
+
+
+
         else:
-            raise ValueError(f"Unknown binary operator: {statement.optype}")
+           code.extend(stmtcodegen(statement.right))
+           code.append(statement.optype.value)
+           return code
+
+
+
+        raise ValueError(f"Unknown binary operator: {statement.optype}")
     
 
     # Should never get here
