@@ -15,6 +15,15 @@ class IntDclNode(ASTNode):
         return f"[IntDclNode varname={self.varname!r}]"
     
 
+class FloatDclNode(ASTNode):
+    def __init__(self, varname:str):
+        self.varname = varname 
+
+    def __repr__(self):
+        return f"[FloatDclNode varname={self.varname!r}]"
+    
+    
+
 class PrintNode(ASTNode):
     def __init__(self, varname:str):
         self.varname = varname
@@ -34,6 +43,14 @@ class IntLitNode(ASTNode):
         self.value = value
     def __repr__(self):
         return f"[IntLitNode value={self.value!r}]"
+    
+
+class FloatLitNode(ASTNode):
+    def __init__(self, value: float):
+        self.value = value
+
+    def __repr__(self):
+        return f"[FloatLitNode value={self.value!r}]"
 
 
 class AssignNode(ASTNode):

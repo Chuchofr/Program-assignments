@@ -90,13 +90,28 @@ class Tokenizer:
                 name = self.cs.read()
                 return Token(TokenType.PRINT, lexeme=f"p{name}", name=name)
 
+
+            case 'f':
+                while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
+                    self.cs.read()
+
+                if self.cs.eof() or self.cs.peek() == '':
+                    raise ValueError("Expected variable name after 'f")
+                
+                if (not self.cs.peek().isalpha()) or (self.cs.peek() not in VALID_VARS):
+                    raise ValueError(f"invalid character: {self.cs.peek()!r}")
+                
+                name = self.cs.read()
+                return Token(TokenType.FLOATDEC, LEXEME = f"f{name}", name = name)
             
             case _:
                 pass # Move on to secondary inspection to handle digits, vars, error case
 
         if char.isdigit():
-            lexeme, intvalue = self.readintliteral(char)
-            return Token(TokenType.INTLIT, lexeme = lexeme, intvalue = intvalue)
+            lexeme, value, is_float = self.readnumberliteral(char)
+            if is_float:
+                return Token(TokenType.FLOATLIT, lexeme = lexeme, floatvalue = value)
+            return Token(TokenType.INTLIT, lexeme = lexeme, intvalue = value)
 
 
         if char.isalpha():
@@ -109,23 +124,29 @@ class Tokenizer:
         
     
 
-    def readintliteral(self, firstchar: str) -> tuple[str, int]:
-        
-        digits: list[str] = []
-        digits.append(firstchar)
-        #if CONDITION:
-        #    raise ValueError("Integer literal cannot have a leading zero")
-
-        #while not self.cs.eof() and SOMETHING:
-        #    digits.append(SOMETHING)
+    def readnumberliteral(self, firstchar: str) -> tuple[str, int | float, bool]:
+        chars = [firstchar]
+        seen_dot = False
 
         if firstchar == '0' and self.cs.peek().isdigit():
             raise ValueError("Integer literal cannot have a leading zero")
+
+        while not self.cs.eof():
+            nxt = self.cs.peek()
+
+            if nxt.isdigit(): 
+                chars.append(self.cs.read())
+            elif nxt == '.' and not seen_dot:
+                seen_dot = True
+                chars.append(self.cs.read())
+            else:
+                break
         
-        while not self.cs.eof() and self.cs.peek().isdigit():
-            digits.append(self.cs.read())
+        lexeme = ''.join(chars)
 
-
-        lexeme = ''.join(digits)
-
-        return lexeme, int(lexeme)
+        if seen_dot:
+            if lexeme.endswith('.'):
+                raise ValueError("Float literal must have digits after decimal point")
+            return lexeme, float(lexeme), True
+        
+        return lexeme, int(lexeme), False
