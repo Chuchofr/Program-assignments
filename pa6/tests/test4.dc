@@ -1,16 +1,1 @@
-4
-sa
-2
-sb
-la
-lb
-^
-sc
-lc
-la
-lb
-*
-+
-sd
-ld
-p
+ERROR: TypeError: Token.__init__() got an unexpected keyword argument 'LEXEME'
