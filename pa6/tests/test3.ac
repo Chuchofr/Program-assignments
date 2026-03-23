@@ -1,7 +1,5 @@
 ia
-ib
-ic
+fb
 a = 2
-b = 5
-c = (a + 1)^(b - 2)
-pc
+b = a + 2.5
+pb

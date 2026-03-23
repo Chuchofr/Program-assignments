@@ -1,48 +1,11 @@
 ia
 ib
-ic
-id
-ie
-ig
-ih
-ij
-ik
-im
-iq
-ir
-it
-iu
-iv
-iw
-ix
-iy
-iz
-
-a = 2
-b = 3
-c = 4
-d = 5
-e = 2
-
-g = (a + b)^(e)
-h = (c - a)^(b - 1)
-j = g + h
-
-k = (j - b)^(a)
-m = (k + c) - (a^b)
-
-q = (m + e)^(a)
-r = (q - a) + (b^a)
-
-t = (r + g) - (h - e)
-u = (t - b)^(e)
-
-v = (u + a*b) - (c^a)
-w = (v + d)^(a - 1)
-
-x = (w - g) + (h^a)
-y = (x + e) - (a^c)
-
-z = (y + d)^(1) + (a^e)
-
-pz
+fa
+fb
+fc
+a = 4
+b = 2
+c = 3.0
+d = (a ^ b) + c
+e = (d * (a - 1)) / 2.0
+pe

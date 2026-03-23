@@ -1,9 +1,5 @@
-ia
-ib
-ic
-id
-a = 2
-b = 3
-c = 4
-d = (a^b) * (c - b) + (b^a)
-pd
+fa
+fb
+a = 1.5
+b = a / 2
+pb
