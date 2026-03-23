@@ -39,8 +39,15 @@ def stmtcodegen(statement: ASTNode) -> InstructionList:
     if isinstance(statement, IntDclNode):
         return code 
 
+    if isinstance(statement, FloatDclNode):
+        return code 
 
     if isinstance(statement, IntLitNode):
+
+        code.append(str(statement.value))
+        return code
+
+    if isinstance(statement, FloatLitNode):
 
         code.append(str(statement.value))
         return code
@@ -102,8 +109,7 @@ def stmtcodegen(statement: ASTNode) -> InstructionList:
 
 
 
-        raise ValueError(f"Unknown binary operator: {statement.optype}")
-    
+        raise ValueError(f"Unknown binary operator: {statement.optype}")    
 
     # Should never get here
     return code

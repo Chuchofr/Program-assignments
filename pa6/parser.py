@@ -125,7 +125,7 @@ def parse_expression(ts: TokenStream) -> ASTNode:
             tok = ts.read()  #consume LPAREN
             opstack.append(tok)
             next = ts.peek()
-            if (next.tokentype == TokenType.LPAREN) or (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.VARREF):
+            if (next.tokentype == TokenType.LPAREN) or (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.FLOATLIT) or (next.tokentype == TokenType.VARREF):
                 continue
             raise ParseError("Expected lparen, intlit, or varref after lparen")
 
@@ -160,7 +160,7 @@ def parse_expression(ts: TokenStream) -> ASTNode:
                     break
 
             next = ts.peek()
-            if (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.VARREF) or (next.tokentype == TokenType.LPAREN):
+            if (next.tokentype == TokenType.INTLIT) or (next.tokentype == TokenType.FLOATLIT) or (next.tokentype == TokenType.VARREF) or (next.tokentype == TokenType.LPAREN):
                 pass
             else:
                 raise ParseError("Expected operand or lparen after operator")
