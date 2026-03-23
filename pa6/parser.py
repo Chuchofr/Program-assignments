@@ -30,6 +30,14 @@ def parse(ts: TokenStream) -> ASTNode:
         node = IntDclNode(t.name)
         expect(ts, TokenType.EOF)
         return node
+    
+    if t.tokentype == TokenType.FLOATDEC:
+        ts.read()
+        if t.name is None:
+            raise ParseError("Malformed FLOATDEC token")
+        node = FloatDclNode(t.name)
+        expect(ts, TokenType.EOF)
+        return node
 
     if t.tokentype == TokenType.VARREF:
         lhs = ts.read()  #consume VARREF
@@ -89,6 +97,17 @@ def parse_expression(ts: TokenStream) -> ASTNode:
                 valstack.append(IntLitNode(tok.intvalue))
                 continue
             raise ParseError("Expected operator or rparen after int literal")
+        
+        if tok.tokentype == TokenType.FLOATLIT:
+            tok = ts.read()
+            if tok.floatvalue is None:
+                raise ParseError("Malformed FLOATLIT token")
+            next = ts.peek()
+            if (next.tokentype in operatortypes) or (next.tokentype == TokenType.RPAREN) or (next.tokentype == TokenType.EOF):
+                valstack.append(FloatLitNode(tok.floatvalue))
+                continue
+            raise ParseError("Expected operator or rparen after float literal")
+
 
         if tok.tokentype == TokenType.VARREF:
             tok = ts.read()
