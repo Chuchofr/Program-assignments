@@ -6,7 +6,7 @@ class SemanticError(Exception):
 
 def semanticanalysis(program: list[ASTNode]) -> None:
 
-    declared = []
+    declared = {}
     initialized = []
 
     for linenumber, statement in enumerate(program, start=1):
@@ -21,7 +21,7 @@ def _semantic_check_stmt(statement: ASTNode, declared: list[str], initialized: l
         varname = statement.varname
         if varname in declared:
             raise SemanticError(f"Variable {varname!r} redeclared at line {linenumber}")
-        declared.append(varname)
+        declared[varname] = "int"
         return
         # SemanticError(f"Variable {varname!r} redeclared at line {linenumber}")    
     

@@ -81,7 +81,7 @@ class Tokenizer:
                 while not self.cs.eof() and self.cs.peek() in {' ', '\n', '\r', '\t'}:
                     self.cs.read()
 
-                if self.cs.eof() and self.cs.peek() == '':
+                if self.cs.eof() or self.cs.peek() == '':
                     raise ValueError("Expected variable name after 'p'")
 
                 if (not self.cs.peek().isalpha()) or (self.cs.peek() not in VALID_VARS):
@@ -96,13 +96,13 @@ class Tokenizer:
                     self.cs.read()
 
                 if self.cs.eof() or self.cs.peek() == '':
-                    raise ValueError("Expected variable name after 'f")
+                    raise ValueError("Expected variable name after 'f'")
                 
                 if (not self.cs.peek().isalpha()) or (self.cs.peek() not in VALID_VARS):
                     raise ValueError(f"invalid character: {self.cs.peek()!r}")
                 
                 name = self.cs.read()
-                return Token(TokenType.FLOATDEC, LEXEME = f"f{name}", name = name)
+                return Token(TokenType.FLOATDEC, lexeme = f"f{name}", name = name)
             
             case _:
                 pass # Move on to secondary inspection to handle digits, vars, error case
