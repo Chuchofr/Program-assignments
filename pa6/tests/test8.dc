@@ -1,1 +1,1 @@
-ERROR: TypeError: Token.__init__() got an unexpected keyword argument 'LEXEME'
+Semantic Error: Variable 'a' redeclared at line 2

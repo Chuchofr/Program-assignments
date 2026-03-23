@@ -1,13 +1,11 @@
 ia
 ib
-ic
-fa
-fb
 fc
-a = 2
-b = 3
-c = 4
-d = 2.5
-e = ((a + b) * c) - d
-f = (e / (a + 2)) + (b ^ 2)
-pf
+fd
+fe
+a = 4
+b = 2
+c = 3.0
+d = (a ^ b) + c
+e = (d * (a - 1)) / 2.0
+pe
