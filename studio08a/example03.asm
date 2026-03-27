@@ -1,5 +1,5 @@
 ; Symbol table
-; a type INT location 0x2000000
+; a type INT location 0x20000000
 ; function INT main([])
 
 ; Symbol table main
@@ -19,20 +19,22 @@ ADDI sp, sp, -4
 ADDI sp, sp, -4
 
 GETI t0
-LA t1, 0x2000000
+LA t1, 0x20000000
 SW t0, 0(t1)
 
 GETI t2
 SW t2, -4(fp)
 
-LA t3, 0x2000000
+LA t3, 0x20000000
 LW t4, 0(t3)
 PUTI t4
 
-LA t5, -4(fp)
+LW t5, -4(fp)
 PUTI t5
 
-ADDI sp, sp, -4
 
-ADDI sp, sp, -4
+ADDI sp, sp, 4
+
+ADDI sp, sp, 4
 MV sp, fp
+RET

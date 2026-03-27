@@ -3,7 +3,7 @@
 ; Function: INT main([])
 
 ; Symbol table main
-; name a type INT location -4
+; name b type INT location -4
 
 .section .text
 
@@ -12,7 +12,7 @@ JR func_main
 HALT
 
 func_main:
-SW fp, 0(sp)
+SW fp, 0(sp)        
 MV fp, sp
 ADDI sp, sp, -4
 
