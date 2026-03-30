@@ -95,6 +95,20 @@ class CodeGenerator(AbstractASTVisitor):
 
     co = CodeObject()
 
+    assert(var.isVar())
+
+    if var.type is Scope.Type.INT:
+      temp = self.generateTemp(Scope.Type.INT)
+      co.code.appent(GetI(temp))
+      address = self.generateAddrFromVariable(var)
+      temp2 = self.generateTemp(Scope.Type.INT)
+      co.code.append(La(temp2, address))
+      co.code.append(Sw(temp, temp2, '0'))
+      
+    elif var.type is Scope.Type.FLOAT:
+
+    else: 
+      raise Exception("Bad type in read Node!")
 
     return co
 
@@ -131,8 +145,30 @@ class CodeGenerator(AbstractASTVisitor):
 
 
   def rvalify(self, lco : CodeObject) -> CodeObject:
+    
+    assert(lco.lval is True)
+    assert(lco.isVar() is True)
 
     co = CodeObject()
+
+    address = self.generateAddrFromVariable(lco)
+    temp1 = self.generateTemp(Scope.Type.INT)
+    co.code.append(La(temp1, address, '0'))
+
+    if lco.type is Scope.Type.INT:
+      temp2 = self.generateTemp(Scope.Type.INT)
+      co.code.append(Lw(temp2, address, '0'))
+
+    elif lco.type is Scope.Type.FLOAT:
+      temp2 = self.generateTemp(Scope.Type.FLOAT)
+      co.code.append(Flw(temp2, temp1, '0'))
+
+    else:
+      raise Exception("Bad type rvalify!")
+    
+    co.type = lco.type 
+    co.
+
 
     return co
 
@@ -143,8 +179,12 @@ class CodeGenerator(AbstractASTVisitor):
 
   def generateAddrFromVariable(self, lco: CodeObject) -> CodeObject:
 
-    co = CodeObject()
+    assert(lco.isVar() is True)
 
 
-    return co
+    symbol = lco.getSTE()
+    address = str(symbol.getAddress())
+
+
+    return address
   
