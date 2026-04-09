@@ -15,7 +15,6 @@ class CodeGenerator(AbstractASTVisitor):
     self.floatRegCount = 0
     self.intTempPrefix = 't'
     self.floatTempPrefix = 'f'
-    self.numCtrlStructs = 0
 
   def getIntRegCount(self):
     return self.intRegCount
@@ -43,98 +42,70 @@ class CodeGenerator(AbstractASTVisitor):
 
     temp = self.generateTemp(Scope.Type.INT)
     val = node.getVal()
+    # LI t2, 5
     co.code.append(Li(temp, val))
     co.temp = temp
     co.lval = False
     co.type = node.getType()
 
+
     return co
 
 
   def postprocessFloatLitNode(self, node: FloatLitNode) -> CodeObject:
-
+    '''
+    This will look a lot like the int literal node above
+    Minor difference: use FImm instead of Li
+    '''
     co = CodeObject()
-
-    temp = self.generateTemp(Scope.Type.FLOAT)
-    val = node.getVal()
-    co.code.append(FImm(temp, val))
-    co.temp = temp
-    co.lval = False
-    co.type = node.getType()
 
     return co
 
 
 
   def postprocessBinaryOpNode(self, node: BinaryOpNode, left: CodeObject, right: CodeObject) -> CodeObject:
+    '''
+    Step 0: Create new code object
+    Step 1: Get code from left child and rvalify if needed
+    Step 2: Add left code
+    Step 3: Get code from right child and rvalify if needed
+    Step 4: Add right code
+    Step 5: Generate binary operation code using left/right's temps
+    Step 6: Update code object's fields
+    Step 7: Return it
+    '''
 
     co = CodeObject()
 
-    newcode = CodeObject()
-
-    optype = str(node.op)
-
-    if left.lval == True:
-      left = self.rvalify(left)
-    co.code.extend(left.code)
-
-    if right.lval == True:
-      right = self.rvalify(right)
-    co.code.extend(right.code)
-
-    if left.type != right.type:
-      print("Incompatible types in binary operation!\n")
-
-    if left.type == Scope.Type.INT:
-      newtemp = self.generateTemp(Scope.Type.INT)
-      if optype == "OpType.ADD":
-        newcode = Add(left.temp, right.temp, newtemp)
-      elif optype == "OpType.SUB":
-        newcode = Sub(left.temp, right.temp, newtemp)
-      elif optype == "OpType.MUL":
-        newcode = Mul(left.temp, right.temp, newtemp)
-      elif optype == "OpType.DIV":
-        newcode = Div(left.temp, right.temp, newtemp)
-      else:
-        print("Bad operation in binop!\n")
-
-    elif left.type == Scope.Type.FLOAT:
-      newtemp = self.generateTemp(Scope.Type.FLOAT)
-      if optype == "OpType.ADD":
-        newcode = FAdd(left.temp, right.temp, newtemp)
-      elif optype == "OpType.SUB":
-        newcode = FSub(left.temp, right.temp, newtemp)
-      elif optype == "OpType.MUL":
-        newcode = FMul(left.temp, right.temp, newtemp)
-      elif optype == "OpType.DIV":
-        newcode = FDiv(left.temp, right.temp, newtemp)
-      else:
-        print("Bad operation in binop!\n")
-
-    else:
-      print("Bad type in binary op!\n")
-
-    co.code.append(newcode)
-    co.lval = False
-    co.temp = newtemp
-    co.type = left.type
 
     return co
 
 
 
   def postprocessUnaryOpNode(self, node: UnaryOpNode, expr: CodeObject) -> CodeObject:
+    '''
+    Unary Op Node would be telling us to do -(expr)
+    Step 1: Generate blank code object
+    Step 2: Get code for expr and rvalify if necessary
+    Step 3: Add expr code after rvalifying
+    Step 4: Generate instruction to negate 
+    Step 5: Update temp/lval of resulting code object
+    Step 6: Return it
+    '''
 
     co = CodeObject()  # Step 0
 
+    
     if expr.lval:
       expr = self.rvalify(expr)
 
-    co.code.extend(expr.code)
+    co.code.extend(expr.code) # Add in all the code required to get expr after rvalifying
+
 
     if expr.type == Scope.Type.INT:
       temp = self.generateTemp(Scope.Type.INT)
       co.code.append(Neg(src=expr.temp, dest=temp))
+      
 
     elif expr.type == Scope.Type.FLOAT:
       temp = self.generateTemp(Scope.Type.FLOAT)
@@ -145,7 +116,7 @@ class CodeGenerator(AbstractASTVisitor):
 
     co.type = expr.type
     co.temp = temp
-    co.lval = False
+    co.lval = False 
 
     return co
   
@@ -156,27 +127,8 @@ class CodeGenerator(AbstractASTVisitor):
 
 
   def postprocessAssignNode(self, node: AssignNode, left: CodeObject, right: CodeObject) -> CodeObject:
-    
     co = CodeObject()
 
-    address = self.generateAddrFromVariable(left)
-    temp = self.generateTemp(Scope.Type.INT)
-    co.code.append(La(temp, address))
-
-    if right.lval:
-      right = self.rvalify(right)
-    co.code.extend(right.code)
-
-    if left.type is Scope.Type.INT:
-      co.code.append(Sw(right.temp, temp, '0'))
-    elif left.type is Scope.Type.FLOAT:
-      co.code.append(Fsw(right.temp, temp, '0'))
-    else:
-      raise Exception("Bad type in assign node")
-
-    co.temp = right.temp
-    co.lval = False
-    co.type = left.type
 
     return co
 
@@ -206,17 +158,14 @@ class CodeGenerator(AbstractASTVisitor):
       temp2 = self.generateTemp(Scope.Type.INT)
       co.code.append(La(temp2, address))
       co.code.append(Sw(temp, temp2, '0'))
-      
+
     elif var.type is Scope.Type.FLOAT:
-      temp = self.generateTemp(Scope.Type.INT)
-      co.code.append(GetF(temp))
-      address = self.generateAddrFromVariable(var)
-      temp2 = self.generateTemp(Scope.Type.INT)
-      co.code.append(La(temp2, address))
-      co.code.append(Fsw(temp, temp2, '0'))
-      
-    else: 
-      raise Exception("Bad type in read Node!")
+      # put stuff here
+      pass
+
+    else:
+      raise Exception("Bad type in read node")
+
 
     return co
 
@@ -224,27 +173,6 @@ class CodeGenerator(AbstractASTVisitor):
   def postprocessWriteNode(self, node: WriteNode, expr: CodeObject) -> CodeObject:
 
     co = CodeObject()
-
-    if expr.type is Scope.Type.STRING:
-      address = self.generateAddrFromVariable(expr)
-      temp = self.generateTemp(Scope.Type.INT)
-      co.code.append(La(temp, address))
-      co.code.append(PutS(temp))
-
-    elif expr.type is Scope.Type.INT:
-      if expr.lval:
-        expr = self.rvalify(expr)
-      co.code.extend(expr.code)
-      co.code.append(PutI(expr.temp))
-
-    elif expr.type is Scope.Type.FLOAT:
-      if expr.lval:
-        expr = self.rvalify(expr)
-      co.code.extend(expr.code)
-      co.code.append(PutF(expr.temp))
-
-    else:
-      raise Exception("Bad type in write node")
 
     return co
 
@@ -259,7 +187,6 @@ class CodeGenerator(AbstractASTVisitor):
     co.code.extend(retExpr.code)
     co.code.append(Halt())
     co.type = None
-    
     return co
 
 
@@ -280,28 +207,28 @@ class CodeGenerator(AbstractASTVisitor):
 
 
   def rvalify(self, lco : CodeObject) -> CodeObject:
-    
+
     assert(lco.lval is True)
     assert(lco.isVar() is True)
-
+    
     co = CodeObject()
 
     address = self.generateAddrFromVariable(lco)
-    temp1 = self.generateTemp(Scope.Type.INT)
-    co.code.append(La(temp1, address, '0'))
+    temp1 = self.generateTemp(Scope.Type.INT) # Addresses are always ints
+    co.code.append(La(temp1, address)) # Load address (global only)
 
     if lco.type is Scope.Type.INT:
       temp2 = self.generateTemp(Scope.Type.INT)
-      co.code.append(Lw(temp2, address, '0'))
+      co.code.append(Lw(temp2, temp1, '0'))
 
     elif lco.type is Scope.Type.FLOAT:
       temp2 = self.generateTemp(Scope.Type.FLOAT)
       co.code.append(Flw(temp2, temp1, '0'))
 
     else:
-      raise Exception("Bad type rvalify!")
-    
-    co.type = lco.type 
+      raise Exception("Bad type in rvalify!")
+
+    co.type = lco.type
     co.lval = False
     co.temp = temp2
 
@@ -313,32 +240,19 @@ class CodeGenerator(AbstractASTVisitor):
 
 
 
-  def generateAddrFromVariable(self, lco: CodeObject) -> CodeObject:
+  def generateAddrFromVariable(self, lco: CodeObject) -> str:
+    '''
+    Changed type to return string.
+    This function is responsible for returning the string that has the address of the variable.
+    Right now it can only handle global variables.
+    For globals: addresses are raw hex, e.g. 0x20000000
+    Locals will be a number relative to the frame pointer
+    '''
 
     assert(lco.isVar() is True)
 
-
-    symbol = lco.getSTE()
-    address = str(symbol.getAddress())
-
+    symbol = lco.getSTE()   # Get symbol from symbol table
+    address = str(symbol.getAddress()) # Get address of variable
 
     return address
-  
-def _incrnumCtrlStruct(self):
-  self.numCtrlStructs += 1
-
-def _getnumCtrlStruct(self) -> int:
-  return self.numCtrlStructs
-
-
-def _generateThenLabel(self, num: int) -> str:
-  return "then" + str(num)
-
-def generateElseLabel(self, num: int) -> str:
-  return "else" + str(num)
-
-def generateLoopLabel(self, num: int) -> str:
-  return "loop" + str(num)
-
-def generateDoneLabel(self, num: int) -> str:
-  return "done" + str(num)
+    
