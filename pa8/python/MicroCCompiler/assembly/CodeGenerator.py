@@ -96,26 +96,26 @@ class CodeGenerator(AbstractASTVisitor):
 
     if left.type == Scope.Type.INT:
       temp = self.generateTemp(Scope.Type.INT)
-      if op == '+':
+      if op == BinaryOpNode.OpType.ADD:
         co.code.append(Add(src1 = left.temp, src2 = right.temp, dest = temp))
-      elif op == '-':
+      elif op == BinaryOpNode.OpType.SUB:
         co.code.append(Sub(src1 = left.temp, src2 = right.temp, dest = temp))
-      elif op == '*':
+      elif op == BinaryOpNode.OpType.MUL:
         co.code.append(Mul(src1 = left.temp, src2 = right.temp, dest = temp))
-      elif op == '/':
+      elif op == BinaryOpNode.OpType.DIV:
         co.code.append(Div(src1 = left.temp, src2 = right.temp, dest = temp))
       else:
         raise Exception("Bad integer operator in binary op node!")
       
     elif left.type == Scope.Type.FLOAT:
       temp = self.generateTemp(Scope.Type.FLOAT)
-      if op == '+':
+      if op == BinaryOpNode.OpType.ADD:
         co.code.append(FAdd(src1 = left.temp, src2 = right.temp, dest = temp))
-      elif op == '-':
+      elif op == BinaryOpNode.OpType.SUB:
         co.code.append(FSub(src1 = left.temp, src2 = right.temp, dest = temp))
-      elif op == '*':
+      elif op == BinaryOpNode.OpType.MUL:
         co.code.append(FMul(src1 = left.temp, src2 = right.temp, dest = temp))
-      elif op == '/':
+      elif op == BinaryOpNode.OpType.DIV:
         co.code.append(FDiv(src1 = left.temp, src2 = right.temp, dest = temp))
       else:
         raise Exception("Bad float operator in binary op node!")
