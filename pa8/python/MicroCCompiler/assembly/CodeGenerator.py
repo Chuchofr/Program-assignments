@@ -198,7 +198,7 @@ class CodeGenerator(AbstractASTVisitor):
 
     co.temp = right.temp
     co.lval = False
-    co.type - left.type
+    co.type = left.type
 
     return co
 
