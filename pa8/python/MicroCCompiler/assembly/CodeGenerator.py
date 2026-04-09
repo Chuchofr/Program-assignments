@@ -89,7 +89,7 @@ class CodeGenerator(AbstractASTVisitor):
     co.code.extend(left.code)
 
     if right.lval:
-      right = self.rvalify(left)
+      right = self.rvalify(right)
     co.code.extend(right.code)
 
     op = node.getOp()
