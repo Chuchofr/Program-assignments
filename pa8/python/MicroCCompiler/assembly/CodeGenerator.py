@@ -260,7 +260,7 @@ class CodeGenerator(AbstractASTVisitor):
         expr = self.rvalify(expr)
 
       co.code.extend(expr.code)
-      co.code.append(PutI(expr.temp))
+      co.code.append(PutF(expr.temp))
 
     else: 
       assert(expr.isVar())
