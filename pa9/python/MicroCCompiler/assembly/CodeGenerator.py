@@ -290,7 +290,6 @@ class CodeGenerator(AbstractASTVisitor):
     '''
     NEW:
     '''
-    node.setOp(node.getReversedOp(node.getOp())) # Reverse comparison type
     
     co = CodeObject()
 
@@ -384,11 +383,9 @@ class CodeGenerator(AbstractASTVisitor):
 
     elselabel = self._generateElseLabel(labelnum)
     donelabel = self._generateDoneLabel(labelnum)
-    temp = self.generateTemp(Scope.Type.INT)
 
     co.code.extend(cond.code)
-    co.code.append(Li(temp, 0))
-    co.code.append(Bne(cond.temp, temp, elselabel))
+    co.code.append(Bne(cond.temp, "x0", elselabel))
 
     co.code.extend(tlist.code)
     co.code.append(J(donelabel))
@@ -411,12 +408,10 @@ class CodeGenerator(AbstractASTVisitor):
 
     looplabel = self._generateLoopLabel(labelnum)
     donelabel = self._generateDoneLabel(labelnum)
-    temp = self.generateTemp(Scope.Type.INT)
 
     co.code.append(Label(looplabel))
     co.code.extend(cond.code)
-    co.code.append(Li(temp, 0))
-    co.code.append(Bne(cond.temp, temp, donelabel))
+    co.code.append(Bne(cond.temp, "x0", donelabel))
 
     co.code.extend(wlist.code)
     co.code.append(J(looplabel))
@@ -514,16 +509,16 @@ class CodeGenerator(AbstractASTVisitor):
     return self.numCtrlStructs
   
   def _generateThenLabel(self, num: int) -> str:
-    return "then"+str(num)
+    return "then_"+str(num)
 
   def _generateElseLabel(self, num: int) -> str:
-    return "else"+str(num)
+    return "else_"+str(num)
 
   def _generateLoopLabel(self, num: int) -> str:
-    return "loop"+str(num)
+    return "loop_"+str(num)
 
   def _generateDoneLabel(self, num: int) -> str:
-    return "done"+str(num)
+    return "done_"+str(num)
   
  
 
