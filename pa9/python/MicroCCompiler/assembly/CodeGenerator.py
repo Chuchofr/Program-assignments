@@ -370,21 +370,26 @@ class CodeGenerator(AbstractASTVisitor):
     '''
     self._incrnumCtrlStruct()
     labelnum = self._getnumCtrlStruct()
-    
+  
     co = CodeObject()
 
     elselabel = self._generateElseLabel(labelnum)
     donelabel = self._generateDoneLabel(labelnum)
 
     co.code.extend(cond.code)
-    co.code.append(Bne(cond.temp, "x0", elselabel))
 
-    co.code.extend(tlist.code)
-    co.code.append(J(donelabel))
-    co.code.append(Label(elselabel))
-    co.code.extend(elist.code)
-    co.code.append(Label(donelabel))
-    
+    if elist is None:
+      co.code.append(Beq(cond.temp, "x0", donelabel))
+      co.code.extend(tlist.code)
+      co.code.append(Label(donelabel))
+    else:
+      co.code.append(Beq(cond.temp, "x0", elselabel))
+      co.code.extend(tlist.code)
+      co.code.append(J(donelabel))
+      co.code.append(Label(elselabel))
+      co.code.extend(elist.code)
+      co.code.append(Label(donelabel))
+  
     return co
 
 
@@ -401,9 +406,9 @@ class CodeGenerator(AbstractASTVisitor):
     looplabel = self._generateLoopLabel(labelnum)
     donelabel = self._generateDoneLabel(labelnum)
 
-
+    co.code.append(Label(looplabel))
     co.code.extend(cond.code)
-    co.code.append(Bne(cond.temp, "x0", donelabel))
+    co.code.append(Beq(cond.temp, "x0", donelabel))
 
     co.code.extend(wlist.code)
     co.code.append(J(looplabel))
@@ -510,7 +515,7 @@ class CodeGenerator(AbstractASTVisitor):
     return "loop_"+str(num)
 
   def _generateDoneLabel(self, num: int) -> str:
-    return "done_"+str(num)
+    return "out_"+str(num)
   
  
 
