@@ -54,7 +54,7 @@ class CodeGenerator(AbstractASTVisitor):
     temp = self.generateTemp(Scope.Type.INT)
     val = node.getVal()
     # LI t2, 5
-    co.code.append(Li(temp, val))
+    co.code.append(Li(temp, str(val)))
     co.temp = temp
     co.lval = False
     co.type = node.getType()
@@ -69,7 +69,7 @@ class CodeGenerator(AbstractASTVisitor):
 
     temp = self.generateTemp(Scope.Type.FLOAT)
     val = node.getVal()
-    co.code.append(FImm(temp, val))
+    co.code.append(FImm(temp, str(val)))
     co.temp = temp
     co.lval = False
     co.type = node.getType()
@@ -307,7 +307,7 @@ class CodeGenerator(AbstractASTVisitor):
       truelabel = "condtrue_" + temp
       donelabel = "conddone_" + temp
 
-      co.code.append(Li(temp, 0))
+      co.code.append(Li(temp, '0'))
 
       if "!=" in optype or "NE" in optype:
         co.code.append(Bne(left.temp, right.temp, truelabel))
@@ -326,7 +326,7 @@ class CodeGenerator(AbstractASTVisitor):
 
       co.code.append(J(donelabel))
       co.code.append(Label(truelabel))
-      co.code.append(Li(temp, 1))
+      co.code.append(Li(temp, '1'))
       co.code.append(Label(donelabel))
 
     elif left.type == Scope.Type.FLOAT:
@@ -346,11 +346,11 @@ class CodeGenerator(AbstractASTVisitor):
         donelabel = "conddone_" + temp
 
         co.code.append(Feq(left.temp, right.temp, temp2))
-        co.code.append(Li(temp, 0))
+        co.code.append(Li(temp, '0'))
         co.code.append(Beq(temp2, "x0", truelabel))
         co.code.append(J(donelabel))
         co.code.append(Label(truelabel))
-        co.code.append(Li(temp, 1))
+        co.code.append(Li(temp, '1'))
         co.code.append(Label(donelabel))
       else:
         raise Exception("Bad conditional operator in cond node: " + str(node.getOp()))
