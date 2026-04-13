@@ -293,10 +293,85 @@ class CodeGenerator(AbstractASTVisitor):
     node.setOp(node.getReversedOp(node.getOp())) # Reverse comparison type
     
     co = CodeObject()
+
+    if left.lval == True:
+      left = self.rvalify(left)
+    co.code.extend(left.code)
+
+    if right.lval == True:
+      right = self.rvalify(right)
+    co.code.extend(right.code)
+
+    optype = str(node.getOp())
+    temp = self.generateTemp(Scope.Type.INT)
+
+    if left.type == Scope.Type.INT:
+      self._incrnumCtrlStruct()
+      labelnum = self._getnumCtrlStruct()
+      truelabel = self._generateThenLabel(labelnum)
+      donelabel = self._generateDoneLabel(labelnum)
+
+      co.code.append(Li(temp, 0))
+
+      if "NE" in optype:
+        co.code.append(Bne(left.temp, right.temp, truelabel))
+      elif "LE" in optype:
+        co.code.append(Ble(left.temp, right.temp, truelabel))
+      elif "GE" in optype:
+        co.code.append(Bge(left.temp, right.temp, truelabel))
+      elif "EQ" in optype:
+        co.code.append(Beq(left.temp, right.temp, truelabel))
+      elif "LT" in optype:
+        co.code.append(Blt(left.temp, right.temp, truelabel))
+      elif "GT" in optype:
+        co.code.append(Bgt(left.temp, right.temp, truelabel))
+      else:
+        raise Exception("Bad conditional operator in cond node")
+
+      co.code.append(J(donelabel))
+      co.code.append(Label(truelabel))
+      co.code.append(Li(temp, 1))
+      co.code.append(Label(donelabel))
+
+    elif left.type == Scope.Type.FLOAT:
+      if "EQ" in optype:
+        co.code.append(Feq(left.temp, right.temp, temp))
+      elif "LT" in optype:
+        co.code.append(Flt(left.temp, right.temp, temp))
+      elif "LE" in optype:
+        co.code.append(Fle(left.temp, right.temp, temp))
+      elif "GT" in optype:
+        co.code.append(Flt(right.temp, left.temp, temp))
+      elif "GE" in optype:
+        co.code.append(Fle(right.temp, left.temp, temp))
+      elif "NE" in optype:
+        temp2 = self.generateTemp(Scope.Type.INT)
+        zerotemp = self.generateTemp(Scope.Type.INT)
+        self._incrnumCtrlStruct()
+        labelnum = self._getnumCtrlStruct()
+        truelabel = self._generateThenLabel(labelnum)
+        donelabel = self._generateDoneLabel(labelnum)
+
+        co.code.append(Feq(left.temp, right.temp, temp2))
+        co.code.append(Li(zerotemp, 0))
+        co.code.append(Li(temp, 0))
+        co.code.append(Beq(temp2, zerotemp, truelabel))
+        co.code.append(J(donelabel))
+        co.code.append(Label(truelabel))
+        co.code.append(Li(temp, 1))
+        co.code.append(Label(donelabel))
+      else:
+        raise Exception("Bad conditional operator in cond node")
+
+    else:
+      raise Exception("Bad type in cond node")
+
+    co.temp = temp
+    co.lval = False
+    co.type = Scope.Type.INT
+
     return co
-
-
-
+  
 
   def postprocessIfStatementNode(self, node: IfStatementNode, cond: CodeObject, tlist: CodeObject, elist: CodeObject) -> CodeObject:
     '''
@@ -306,6 +381,20 @@ class CodeGenerator(AbstractASTVisitor):
     labelnum = self._getnumCtrlStruct()
     
     co = CodeObject()
+
+    elselabel = self._generateElseLabel(labelnum)
+    donelabel = self._generateDoneLabel(labelnum)
+    temp = self.generateTemp(Scope.Type.INT)
+
+    co.code.extend(cond.code)
+    co.code.append(Li(temp, 0))
+    co.code.append(Bne(cond.temp, temp, elselabel))
+
+    co.code.extend(tlist.code)
+    co.code.append(J(donelabel))
+    co.code.append(Label(elselabel))
+    co.code.extend(elist.code)
+    co.code.append(Label(donelabel))
     
     return co
 
@@ -319,6 +408,19 @@ class CodeGenerator(AbstractASTVisitor):
     self._incrnumCtrlStruct()
     labelnum = self._getnumCtrlStruct()
     co = CodeObject()
+
+    looplabel = self._generateLoopLabel(labelnum)
+    donelabel = self._generateDoneLabel(labelnum)
+    temp = self.generateTemp(Scope.Type.INT)
+
+    co.code.append(Label(looplabel))
+    co.code.extend(cond.code)
+    co.code.append(Li(temp, 0))
+    co.code.append(Bne(cond.temp, temp, donelabel))
+
+    co.code.extend(wlist.code)
+    co.code.append(J(looplabel))
+    co.code.append(Label(donelabel))
 
     return co
   
@@ -422,4 +524,7 @@ class CodeGenerator(AbstractASTVisitor):
 
   def _generateDoneLabel(self, num: int) -> str:
     return "done"+str(num)
+  
+ 
+
   
