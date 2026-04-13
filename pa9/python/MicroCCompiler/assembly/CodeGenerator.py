@@ -290,7 +290,6 @@ class CodeGenerator(AbstractASTVisitor):
     '''
     NEW:
     '''
-    
     co = CodeObject()
 
     if left.lval == True:
@@ -301,31 +300,29 @@ class CodeGenerator(AbstractASTVisitor):
       right = self.rvalify(right)
     co.code.extend(right.code)
 
-    optype = str(node.getOp())
+    optype = str(node.getOp()).upper()
     temp = self.generateTemp(Scope.Type.INT)
 
     if left.type == Scope.Type.INT:
-      self._incrnumCtrlStruct()
-      labelnum = self._getnumCtrlStruct()
-      truelabel = self._generateThenLabel(labelnum)
-      donelabel = self._generateDoneLabel(labelnum)
+      truelabel = "condtrue_" + temp
+      donelabel = "conddone_" + temp
 
       co.code.append(Li(temp, 0))
 
-      if "NE" in optype:
+      if "!=" in optype or "NE" in optype:
         co.code.append(Bne(left.temp, right.temp, truelabel))
-      elif "LE" in optype:
+      elif "<=" in optype or "LE" in optype:
         co.code.append(Ble(left.temp, right.temp, truelabel))
-      elif "GE" in optype:
+      elif ">=" in optype or "GE" in optype:
         co.code.append(Bge(left.temp, right.temp, truelabel))
-      elif "EQ" in optype:
+      elif "==" in optype or "EQ" in optype:
         co.code.append(Beq(left.temp, right.temp, truelabel))
-      elif "LT" in optype:
+      elif "<" in optype or "LT" in optype:
         co.code.append(Blt(left.temp, right.temp, truelabel))
-      elif "GT" in optype:
+      elif ">" in optype or "GT" in optype:
         co.code.append(Bgt(left.temp, right.temp, truelabel))
       else:
-        raise Exception("Bad conditional operator in cond node")
+        raise Exception("Bad conditional operator in cond node: " + str(node.getOp()))
 
       co.code.append(J(donelabel))
       co.code.append(Label(truelabel))
@@ -333,34 +330,30 @@ class CodeGenerator(AbstractASTVisitor):
       co.code.append(Label(donelabel))
 
     elif left.type == Scope.Type.FLOAT:
-      if "EQ" in optype:
+      if "==" in optype or "EQ" in optype:
         co.code.append(Feq(left.temp, right.temp, temp))
-      elif "LT" in optype:
-        co.code.append(Flt(left.temp, right.temp, temp))
-      elif "LE" in optype:
+      elif "<=" in optype or "LE" in optype:
         co.code.append(Fle(left.temp, right.temp, temp))
-      elif "GT" in optype:
-        co.code.append(Flt(right.temp, left.temp, temp))
-      elif "GE" in optype:
+      elif ">=" in optype or "GE" in optype:
         co.code.append(Fle(right.temp, left.temp, temp))
-      elif "NE" in optype:
+      elif "<" in optype or "LT" in optype:
+        co.code.append(Flt(left.temp, right.temp, temp))
+      elif ">" in optype or "GT" in optype:
+        co.code.append(Flt(right.temp, left.temp, temp))
+      elif "!=" in optype or "NE" in optype:
         temp2 = self.generateTemp(Scope.Type.INT)
-        zerotemp = self.generateTemp(Scope.Type.INT)
-        self._incrnumCtrlStruct()
-        labelnum = self._getnumCtrlStruct()
-        truelabel = self._generateThenLabel(labelnum)
-        donelabel = self._generateDoneLabel(labelnum)
+        truelabel = "condtrue_" + temp
+        donelabel = "conddone_" + temp
 
         co.code.append(Feq(left.temp, right.temp, temp2))
-        co.code.append(Li(zerotemp, 0))
         co.code.append(Li(temp, 0))
-        co.code.append(Beq(temp2, zerotemp, truelabel))
+        co.code.append(Beq(temp2, "x0", truelabel))
         co.code.append(J(donelabel))
         co.code.append(Label(truelabel))
         co.code.append(Li(temp, 1))
         co.code.append(Label(donelabel))
       else:
-        raise Exception("Bad conditional operator in cond node")
+        raise Exception("Bad conditional operator in cond node: " + str(node.getOp()))
 
     else:
       raise Exception("Bad type in cond node")
@@ -370,7 +363,6 @@ class CodeGenerator(AbstractASTVisitor):
     co.type = Scope.Type.INT
 
     return co
-  
 
   def postprocessIfStatementNode(self, node: IfStatementNode, cond: CodeObject, tlist: CodeObject, elist: CodeObject) -> CodeObject:
     '''
@@ -409,7 +401,7 @@ class CodeGenerator(AbstractASTVisitor):
     looplabel = self._generateLoopLabel(labelnum)
     donelabel = self._generateDoneLabel(labelnum)
 
-    co.code.append(Label(looplabel))
+
     co.code.extend(cond.code)
     co.code.append(Bne(cond.temp, "x0", donelabel))
 
