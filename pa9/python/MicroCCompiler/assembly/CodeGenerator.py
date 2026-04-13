@@ -37,31 +37,43 @@ class CodeGenerator(AbstractASTVisitor):
   # Mark the code object as holding a variable, and also as an lval
 
   def postprocessVarNode(self, node: VarNode) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
-    pass
+    sym = node.getSymbol()
+
+    co = CodeObject(sym)
+    co.lval = True
+    co.type = node.getType()
+
+    return co
 
 
 
   
   def postprocessIntLitNode(self, node: IntLitNode) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
-
     co = CodeObject()
+
+    temp = self.generateTemp(Scope.Type.INT)
+    val = node.getVal()
+    # LI t2, 5
+    co.code.append(Li(temp, val))
+    co.temp = temp
+    co.lval = False
+    co.type = node.getType()
+
 
     return co
 
 
+
   def postprocessFloatLitNode(self, node: FloatLitNode) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
     co = CodeObject()
 
-  
+    temp = self.generateTemp(Scope.Type.FLOAT)
+    val = node.getVal()
+    co.code.append(FImm(temp, val))
+    co.temp = temp
+    co.lval = False
+    co.type = node.getType()
+
     return co
   
 
@@ -146,21 +158,60 @@ class CodeGenerator(AbstractASTVisitor):
 
 
   def postprocessUnaryOpNode(self, node: UnaryOpNode, expr: CodeObject) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
     co = CodeObject()  # Step 0
 
+    
+    if expr.lval:
+      expr = self.rvalify(expr)
+
+    co.code.extend(expr.code) # Add in all the code required to get expr after rvalifying
+
+
+    if expr.type == Scope.Type.INT:
+      temp = self.generateTemp(Scope.Type.INT)
+      co.code.append(Neg(src=expr.temp, dest=temp))
+      
+
+    elif expr.type == Scope.Type.FLOAT:
+      temp = self.generateTemp(Scope.Type.FLOAT)
+      co.code.append(FNeg(src=expr.temp, dest=temp))
+
+    else:
+      raise Exception("Non int/float type in unary op!")
+
+    co.type = expr.type
+    co.temp = temp
+    co.lval = False 
 
     return co
+  
 
   def postprocessAssignNode(self, node: AssignNode, left: CodeObject, right: CodeObject) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
     co = CodeObject()
-   
+
+    assert(left.isVar())
+
+    if right.lval:
+      right = self.rvalify(right)
+    co.code.extend(right.code)
+
+    address = self.generateAddrFromVariable(left)
+    temp = self.generateTemp(Scope.Type.INT)
+    co.code.append(La(temp, address))
+
+    if left.type is Scope.Type.INT:
+      co.code.append(Sw(right.temp, temp, '0'))
+    elif left.type is Scope.Type.FLOAT:
+      co.code.append(Fsw(right.temp, temp, '0'))
+    else: 
+      raise Exception("Bad Type in assign node")
+
+    co.temp = right.temp
+    co.lval = False
+    co.type = left.type
+
     return co
+
 
   def postprocessStatementListNode(self, node: StatementListNode, statements: list) -> CodeObject:
     co = CodeObject()
@@ -179,21 +230,59 @@ class CodeGenerator(AbstractASTVisitor):
 	 # Step 3: generate store, to store temp in variable
 	
   def postprocessReadNode(self, node: ReadNode, var: CodeObject) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
     co = CodeObject()
-    
+
+    assert(var.isVar())
+
+    if var.type is Scope.Type.INT:
+      temp = self.generateTemp(Scope.Type.INT)
+      co.code.append(GetI(temp))
+      address = self.generateAddrFromVariable(var)
+      temp2 = self.generateTemp(Scope.Type.INT)
+      co.code.append(La(temp2, address))
+      co.code.append(Sw(temp, temp2, '0'))
+
+    elif var.type is Scope.Type.FLOAT:
+      temp = self.generateTemp(Scope.Type.FLOAT)
+      co.code.append(GetF(temp))
+      address = self.generateAddrFromVariable(var)
+      temp2 = self.generateTemp(Scope.Type.INT)
+      co.code.append(La(temp2, address))
+      co.code.append(Fsw(temp, temp2, '0'))
+
+    else:
+      raise Exception("Bad type in read node")
+
+
     return co
+
 	 
 
   def postprocessWriteNode(self, node: WriteNode, expr: CodeObject) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
     co = CodeObject()
-    return co
 
+    if expr.type is Scope.Type.INT:
+      if expr.lval:
+        expr = self.rvalify(expr)
+
+      co.code.extend(expr.code)
+      co.code.append(PutI(expr.temp))
+    
+    elif expr.type is Scope.Type.FLOAT:
+      if expr.lval:
+        expr = self.rvalify(expr)
+
+      co.code.extend(expr.code)
+      co.code.append(PutF(expr.temp))
+
+    else: 
+      assert(expr.isVar())
+      address = self.generateAddrFromVariable(expr)
+      temp = self.generateTemp(Scope.Type.INT)
+      co.code.append(La(temp, address))
+      co.code.append(PutS(temp))
+
+    return co
 
 
 
@@ -237,13 +326,16 @@ class CodeGenerator(AbstractASTVisitor):
 
   
   def postprocessReturnNode(self, node: ReturnNode, retExpr: CodeObject) -> CodeObject:
-    ''' 
-    Copy from PA8
-    '''
     co = CodeObject()
 
-  
+    if retExpr.lval is True:
+      retExpr = self.rvalify(retExpr)
+
+    co.code.extend(retExpr.code)
+    co.code.append(Halt())
+    co.type = None
     return co
+
 
   
   def generateTemp(self, t: Scope.Type) -> str:
@@ -265,11 +357,33 @@ class CodeGenerator(AbstractASTVisitor):
 
 
   def rvalify(self, lco : CodeObject) -> CodeObject:
-    '''
-    Copy from PA8
-    '''
+    assert(lco.lval is True)
+    assert(lco.isVar() is True)
+    
     co = CodeObject()
+
+    address = self.generateAddrFromVariable(lco)
+    temp1 = self.generateTemp(Scope.Type.INT) # Addresses are always ints
+    co.code.append(La(temp1, address)) # Load address (global only)
+
+    if lco.type is Scope.Type.INT:
+      temp2 = self.generateTemp(Scope.Type.INT)
+      co.code.append(Lw(temp2, temp1, '0'))
+
+    elif lco.type is Scope.Type.FLOAT:
+      temp2 = self.generateTemp(Scope.Type.FLOAT)
+      co.code.append(Flw(temp2, temp1, '0'))
+
+    else:
+      raise Exception("Bad type in rvalify!")
+
+    co.type = lco.type
+    co.lval = False
+    co.temp = temp2
+
+
     return co
+
     
   def generateAddrFromVariable(self, lco: CodeObject) -> str:
     
@@ -280,7 +394,12 @@ class CodeGenerator(AbstractASTVisitor):
     address = symbol.addressToString()
     Otherwise the hex addresses for globals will get mangled
     '''
-    return "asdf"
+    assert(lco.isVar() is True)
+
+    symbol = lco.getSTE()   # Get symbol from symbol table
+    address = str(symbol.getAddress()) # Get address of variable
+
+    return address
   
 
 
