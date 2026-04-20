@@ -180,14 +180,24 @@ class CodeGenerator(AbstractASTVisitor):
       right = self.rvalify(right)
     co.code.extend(right.code)
 
-    address = self.generateAddrFromVariable(left)
-    temp = self.generateTemp(Scope.Type.INT)
-    co.code.append(La(temp, address))
+    symbol = left.getSTE()
+    address = symbol.addressToString()
+
+    if symbol.isLocal():
+      if left.type is Scope.Type.INT:
+        co.code.append(Sw(right.temp, "fp", address))
+      elif left.type is Scope.Type.FLOAT:
+        co.code.append(Fsw(right.temp, "fp", address))
+      else:
+        raise Exception("Bad Type in assigne node")
+    else:
+      addressco = self.generateAddrFromVariable(left)
+      co.code.extend(addressco)
 
     if left.type is Scope.Type.INT:
-      co.code.append(Sw(right.temp, temp, '0'))
+      co.code.append(Sw(right.temp, addressco.getLast().getDest(), '0'))
     elif left.type is Scope.Type.FLOAT:
-      co.code.append(Fsw(right.temp, temp, '0'))
+      co.code.append(Fsw(right.temp, addressco.getLast().getDest(), '0'))
     else: 
       raise Exception("Bad Type in assign node")
 
@@ -215,25 +225,33 @@ class CodeGenerator(AbstractASTVisitor):
 
     assert(var.isVar())
 
+    symbol = var.getSTE()
+    address = symbol.addressToString()
+
     if var.type is Scope.Type.INT:
       temp = self.generateTemp(Scope.Type.INT)
       co.code.append(GetI(temp))
-      address = self.generateAddrFromVariable(var)
-      temp2 = self.generateTemp(Scope.Type.INT)
-      co.code.append(La(temp2, address))
-      co.code.append(Sw(temp, temp2, '0'))
+
+      if symbol.isLocal():
+        co.code.append(Sw(temp, "fp", address))
+      else:
+        addressco = self.generateAddrFromVariable(var)
+        co.code.extend(addressco)
+        co.code.append(Sw(temp, addressco.getLast().getDest(), "0"))
 
     elif var.type is Scope.Type.FLOAT:
       temp = self.generateTemp(Scope.Type.FLOAT)
       co.code.append(GetF(temp))
-      address = self.generateAddrFromVariable(var)
-      temp2 = self.generateTemp(Scope.Type.INT)
-      co.code.append(La(temp2, address))
-      co.code.append(Fsw(temp, temp2, '0'))
+
+      if symbol.isLocal():
+        co.code.append(Fsw(temp, "fp", address))
+      else:
+        addressco = self.generateAddrFromVariable(var)
+        co.code.extend(addressco)
+        co.code.append(Fsw(temp, addressco.getLast().getDest(), "0"))
 
     else:
       raise Exception("Bad type in read node")
-
 
     return co
 
