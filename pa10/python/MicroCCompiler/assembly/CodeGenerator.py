@@ -16,6 +16,7 @@ class CodeGenerator(AbstractASTVisitor):
     self.floatRegCount = 1
     self.intTempPrefix = 't'
     self.floatTempPrefix = 'f'
+    self.numCtrlStructs = 0
     self.loopLabel = 0
     self.elseLabel = 0
     self.outLabel = 0
@@ -189,17 +190,17 @@ class CodeGenerator(AbstractASTVisitor):
       elif left.type is Scope.Type.FLOAT:
         co.code.append(Fsw(right.temp, "fp", address))
       else:
-        raise Exception("Bad Type in assigne node")
+        raise Exception("Bad Type in assign node")
     else:
       addressco = self.generateAddrFromVariable(left)
       co.code.extend(addressco)
 
-    if left.type is Scope.Type.INT:
-      co.code.append(Sw(right.temp, addressco.getLast().getDest(), '0'))
-    elif left.type is Scope.Type.FLOAT:
-      co.code.append(Fsw(right.temp, addressco.getLast().getDest(), '0'))
-    else: 
-      raise Exception("Bad Type in assign node")
+      if left.type is Scope.Type.INT:
+        co.code.append(Sw(right.temp, addressco.getLast().getDest(), '0'))
+      elif left.type is Scope.Type.FLOAT:
+        co.code.append(Fsw(right.temp, addressco.getLast().getDest(), '0'))
+      else:
+        raise Exception("Bad Type in assign node")
 
     co.temp = right.temp
     co.lval = False
@@ -436,8 +437,8 @@ class CodeGenerator(AbstractASTVisitor):
 
     self.currFunc = node.getFuncName()
 
-    self.intRegCount = 0
-    self.floatRegCount = 0
+    self.intRegCount = 1
+    self.floatRegCount = 1
 
 
   def postprocessFunctionNode(self, node: FunctionNode, body: CodeObject) -> CodeObject:
@@ -526,7 +527,6 @@ class CodeGenerator(AbstractASTVisitor):
     Step 6: Pop return value into fresh temporary
     Step 7: Remove arguments from stack (move sp up, no need to keep these values)
     '''
-
     co = CodeObject()
 
     for arg in args:
@@ -540,43 +540,42 @@ class CodeGenerator(AbstractASTVisitor):
         co.code.append(Sw(arg.temp, "sp", "0"))
       co.code.append(Addi("sp", "-4", "sp"))
 
-      if node.getType() is not Scope.Type.VOID:
-        co.code.append(Addi("sp", "-4", "sp"))
-      
-      co.code.append(Sw("ra", "sp", "0"))
+    if node.getType() is not Scope.Type.VOID:
       co.code.append(Addi("sp", "-4", "sp"))
-      co.code.append(Jr(self._generateFunctionEntryLabel(node.getFuncName())))
 
+    co.code.append(Sw("ra", "sp", "0"))
+    co.code.append(Addi("sp", "-4", "sp"))
+    co.code.append(Jr(self._generateFunctionEntryLabel(node.getFuncName())))
+
+    co.code.append(Addi("sp", "4", "sp"))
+    co.code.append(Lw("ra", "sp", "0"))
+
+    if node.getType() is Scope.Type.INT:
+      co.temp = self.generateTemp(Scope.Type.INT)
       co.code.append(Addi("sp", "4", "sp"))
-      co.code.append(Lw("ra", "sp", "0"))
+      co.code.append(Lw(co.temp, "sp", "0"))
+      co.lval = False
+      co.type = Scope.Type.INT
 
-      if node.getType() is Scope.Type.INT:
-        co.temp = self.generateTemp(Scope.Type.INT)
-        co.code.append(Addi("sp", "4", "sp"))
-        co.code.append(Lw(co.temp, "sp", "0"))
-        co.lval = False
-        co.type = Scope.Type.INT
+    elif node.getType() is Scope.Type.FLOAT:
+      co.temp = self.generateTemp(Scope.Type.FLOAT)
+      co.code.append(Addi("sp", "4", "sp"))
+      co.code.append(Flw(co.temp, "sp", "0"))
+      co.lval = False
+      co.type = Scope.Type.FLOAT
 
-      elif node.getType() is Scope.Type.FLOAT:
-        co.temp = self.generateTemp(Scope.Type.FLOAT)
-        co.code.append(Addi("sp", "4", "sp"))
-        co.code.append(Flw(co.temp, "sp", "0"))
-        co.lval = False
-        co.type = Scope.Type.FLOAT
+    elif node.getType() is Scope.Type.VOID:
+      co.lval = False
+      co.temp = None
+      co.type = Scope.Type.VOID
 
-      elif node.getType() is Scope.Type.VOID:
-        co.lval = False
-        co.temp = None
-        co.type = Scope.Type.VOID
+    else:
+      raise Exception("Bad return type in the call node")
 
-      else:
-        raise Exception("Bad return type in the call node")
-      
-      if len(arg) > 0:
-        co.code.append(Addi("sp", str(4 * len(args)), "sp"))
+    if len(args) > 0:
+      co.code.append(Addi("sp", str(4 * len(args)), "sp"))
 
     return co
-
 
   
   def generateTemp(self, t: Scope.Type) -> str:
