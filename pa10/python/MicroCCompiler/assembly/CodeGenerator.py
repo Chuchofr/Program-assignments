@@ -457,7 +457,7 @@ class CodeGenerator(AbstractASTVisitor):
     numintregs = self.getIntRegCount() - 1
     numfloatregs = self.getFloatRegCount() - 1
 
-    co.code.append(Label(self.generateFunctionEntryLabel()))
+    co.code.append(Label(self._generateFunctionEntryLabel()))
     co.code.append(Sw("fp", "sp", "0"))
     co.code.append(Mv("sp", "fp"))
     co.code.append(Addi("sp", "-4", "sp"))
@@ -502,7 +502,7 @@ class CodeGenerator(AbstractASTVisitor):
     co = CodeObject()
 
     co.code.append(Mv("sp", "fp"))
-    co.code.append(Jr(self.generateFunctionEntryLabel("main")))
+    co.code.append(Jr(self._generateFunctionEntryLabel("main")))
     co.code.append(Halt())
     co.code.append(Blank())
 
@@ -528,7 +528,53 @@ class CodeGenerator(AbstractASTVisitor):
     '''
 
     co = CodeObject()
-   
+
+    for arg in args:
+      if arg.lval:
+        arg = self.rvalify(arg)
+      co.code.extend(arg.code)
+
+      if arg.type is Scope.Type.FLOAT:
+        co.code.append(Fsw(arg.temp, "sp", "0"))
+      else:
+        co.code.append(Sw(arg.temp, "sp", "0"))
+      co.code.append(Addi("sp", "-4", "sp"))
+
+      if node.getType() is not Scope.Type.VOID:
+        co.code.append(Addi("sp", "-4", "sp"))
+      
+      co.code.append(Sw("ra", "sp", "0"))
+      co.code.append(Addi("sp", "-4", "sp"))
+      co.code.append(Jr(self._generateFunctionEntryLabel(node.getFuncName())))
+
+      co.code.append(Addi("sp", "4", "sp"))
+      co.code.append(Lw("ra", "sp", "0"))
+
+      if node.getType() is Scope.Type.INT:
+        co.temp = self.generateTemp(Scope.Type.INT)
+        co.code.append(Addi("sp", "4", "sp"))
+        co.code.append(Lw(co.temp, "sp", "0"))
+        co.lval = False
+        co.type = Scope.Type.INT
+
+      elif node.getType() is Scope.Type.FLOAT:
+        co.temp = self.generateTemp(Scope.Type.FLOAT)
+        co.code.append(Addi("sp", "4", "sp"))
+        co.code.append(Flw(co.temp, "sp", "0"))
+        co.lval = False
+        co.type = Scope.Type.FLOAT
+
+      elif node.getType() is Scope.Type.VOID:
+        co.lval = False
+        co.temp = None
+        co.type = Scope.Type.VOID
+
+      else:
+        raise Exception("Bad return type in the call node")
+      
+      if len(arg) > 0:
+        co.code.append(Addi("sp", str(4 * len(args)), "sp"))
+
     return co
 
 
@@ -553,24 +599,36 @@ class CodeGenerator(AbstractASTVisitor):
     
     co = CodeObject()
 
-    address = self.generateAddrFromVariable(lco)
-    temp1 = self.generateTemp(Scope.Type.INT) # Addresses are always ints
-    co.code.append(La(temp1, address)) # Load address (global only)
+    symbol = lco.getSTE()
+    address = symbol.addressToString()
 
     if lco.type is Scope.Type.INT:
-      temp2 = self.generateTemp(Scope.Type.INT)
-      co.code.append(Lw(temp2, temp1, '0'))
+      temp = self.generateTemp(Scope.Type.INT)
+
+      if symbol.isLocal():
+        co.code.append(Lw(temp, "fp", address))
+      else:
+        addressco = self.generateAddrFromVariable(lco)
+        co.code.extend(addressco)
+        co.code.append(Lw(temp, addressco.getLast().getDest(), "0"))
 
     elif lco.type is Scope.Type.FLOAT:
-      temp2 = self.generateTemp(Scope.Type.FLOAT)
-      co.code.append(Flw(temp2, temp1, '0'))
+      temp = self.generateTemp(Scope.Type.FLOAT)
+
+      if symbol.isLocal():
+        co.code.append(Flw(temp, "fp", address))
+      else:
+        addressco = self.generateAddrFromVariable(lco)
+        co.code.extend(addressco)
+        co.code.append(Flw(temp, addressco.getLast().getDest(), "0"))
+
 
     else:
       raise Exception("Bad type in rvalify!")
 
     co.type = lco.type
     co.lval = False
-    co.temp = temp2
+    co.temp = temp
 
 
     return co
@@ -580,10 +638,18 @@ class CodeGenerator(AbstractASTVisitor):
   def generateAddrFromVariable(self, lco: CodeObject) -> str:
     assert(lco.isVar() is True)
 
-    symbol = lco.getSTE()   # Get symbol from symbol table
-    address = str(symbol.getAddress()) # Get address of variable
+   
+    il = InstructionList()
+    symbol = lco.getSTE()
+    address = symbol.addressToString()
+    temp = self.generateTemp(Scope.Type.INT)
 
-    return address
+    if symbol.isLocal():
+      il.append(Addi("fp", address, temp))
+    else:
+      il.append(La(temp, address))
+
+    return il
 
 
   def _incrnumCtrlStruct(self):
@@ -593,16 +659,16 @@ class CodeGenerator(AbstractASTVisitor):
     return self.numCtrlStructs
   
   def _generateThenLabel(self, num: int) -> str:
-    return "then"+str(num)
+    return "then_"+str(num)
 
   def _generateElseLabel(self, num: int) -> str:
-    return "else"+str(num)
+    return "else_"+str(num)
 
   def _generateLoopLabel(self, num: int) -> str:
-    return "loop"+str(num)
+    return "loop_"+str(num)
 
   def _generateDoneLabel(self, num: int) -> str:
-    return "done"+str(num)
+    return "out_"+str(num)
   
 
 
