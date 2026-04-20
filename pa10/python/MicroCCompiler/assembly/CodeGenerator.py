@@ -259,13 +259,20 @@ class CodeGenerator(AbstractASTVisitor):
   def postprocessWriteNode(self, node: WriteNode, expr: CodeObject) -> CodeObject:
     co = CodeObject()
 
-    if expr.type is Scope.Type.INT:
+    if node.getWriteExpr().getType() is Scope.Type.STRING:
+      assert(expr.isVar())
+
+      addressco = self.generateAddrFromVariable(expr)
+      co.code.extend(addressco)
+      co.code.append(PutS(addressco.getLast().getDest()))
+
+    elif expr.type is Scope.Type.INT:
       if expr.lval:
         expr = self.rvalify(expr)
 
       co.code.extend(expr.code)
       co.code.append(PutI(expr.temp))
-    
+
     elif expr.type is Scope.Type.FLOAT:
       if expr.lval:
         expr = self.rvalify(expr)
@@ -273,15 +280,10 @@ class CodeGenerator(AbstractASTVisitor):
       co.code.extend(expr.code)
       co.code.append(PutF(expr.temp))
 
-    else: 
-      assert(expr.isVar())
-      address = self.generateAddrFromVariable(expr)
-      temp = self.generateTemp(Scope.Type.INT)
-      co.code.append(La(temp, address))
-      co.code.append(PutS(temp))
+    else:
+      raise Exception("Bad type in write node")
 
     return co
-
 	
   def postprocessCondNode(self, node: CondNode, left: CodeObject, right: CodeObject) -> CodeObject:
     co = CodeObject()
@@ -405,22 +407,28 @@ class CodeGenerator(AbstractASTVisitor):
   
 
   def postprocessReturnNode(self, node: ReturnNode, retExpr: CodeObject) -> CodeObject:
-    '''
-    This is responsible for handing things like "return b" or "return".  
-    Notably, this part will NOT generate a RET instruction.
-    Step 1: rvalify (if necessary) code for the retExpr
-    Step 2: add in retExpr code
-    Step 3: store return value from retExpr's temporary to the return value spot in the stack (8 up from FP)
-    '''
     co = CodeObject()
 
-    if retExpr.lval is True:
+    if retExpr is not None and retExpr.lval is True:
       retExpr = self.rvalify(retExpr)
 
-    co.code.extend(retExpr.code)
-    co.code.append(Halt())
+    if retExpr is not None:
+      co.code.extend(retExpr.code)
+
+    rettype = node.getFuncSymbol().getReturnType()
+
+    if rettype is Scope.Type.INT:
+      co.code.append(Sw(retExpr.temp, "fp", "8"))
+    elif rettype is Scope.Type.FLOAT:
+      co.code.append(Fsw(retExpr.temp, "fp", "8"))
+    elif rettype is not Scope.Type.VOID:
+      raise Exception("Bad return type in return node")
+
+    co.code.append(J(self._generateFunctionRetLabel()))
     co.type = None
+
     return co
+
 
 
 
@@ -445,10 +453,40 @@ class CodeGenerator(AbstractASTVisitor):
 
     co = CodeObject()
 
+    numlocals = node.getScope().getNumLocals()
+    numintregs = self.getIntRegCount() - 1
+    numfloatregs = self.getFloatRegCount() - 1
 
+    co.code.append(Label(self.generateFunctionEntryLabel()))
+    co.code.append(Sw("fp", "sp", "0"))
+    co.code.append(Mv("sp", "fp"))
+    co.code.append(Addi("sp", "-4", "sp"))
+    co.code.append(Addi("sp", "-" + str(4 * numlocals), "sp"))
+
+    for i in range(1, numintregs + 1):
+      co.code.append(Sw("t" + str(i), "sp", "0"))
+      co.code.append(Addi("sp", "-4", "sp"))
+
+    for i in range(1, numfloatregs + 1):
+      co.code.append(Fsw("f" + str(i), "sp", "0"))
+      co.code.append(Addi("sp", "-4", "sp"))
+
+    co.code.extend(body.code)
+    co.code.append(Label(self._generateFunctionRetLabel()))
+
+    for i in range(numfloatregs, 0, -1):
+      co.code.append(Addi("sp", "4", "sp"))
+      co.code.append(Flw("f" + str(i), "sp", "0"))
+
+    for i in range(numintregs, 0, -1):
+      co.code.append(Addi("sp", "4", "sp"))
+      co.code.append(Lw("t" + str(i), "sp", "0"))
+
+    co.code.append(Mv("fp", "sp"))
+    co.code.append(Lw("fp", "fp", "0"))
+    co.code.append(Ret())
 
     return co
-
 
 	
 
